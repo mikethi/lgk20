@@ -1,0 +1,1198 @@
+#include <generated/autoconf.h>
+/dts-v1/;
+
+#ifdef CONFIG_MTK_DTBO_FEATURE
+/plugin/;
+#include <dt-bindings/mmc/mt6739-msdc.h>
+#include <dt-bindings/pinctrl/mt6739-pinfunc.h>
+#else
+#include "mt6739.dts"
+#endif
+
+/* chosen */
+&chosen {
+	/* fpga may has no lk, we need to specify display info here */
+	/* fb buffer is reserved using this dts by memory node above */
+
+	atag,videolfb-fb_base_l = <0x5e605000>;
+	atag,videolfb-fb_base_h = <0>;
+	atag,videolfb-islcmfound = <1>;
+	atag,videolfb-islcm_inited = <0>;
+	atag,videolfb-fps= <6000>;
+	atag,videolfb-vramSize= <0x017bb000>;
+	atag,videolfb-lcmname= "nt35521_hd_dsi_vdo_truly_nt50358_drv";
+};
+
+&odm {
+	led0:led@0 {
+		compatible = "mediatek,red";
+		led_mode = <3>;
+		data = <2>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led1:led@1 {
+		compatible = "mediatek,green";
+		led_mode = <3>;
+		data = <2>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led2:led@2 {
+		compatible = "mediatek,blue";
+		led_mode = <3>;
+		data = <2>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led3:led@3 {
+		compatible = "mediatek,jogball-backlight";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led4:led@4 {
+		compatible = "mediatek,keyboard-backlight";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led5:led@5 {
+		compatible = "mediatek,button-backlight";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led6:led@6 {
+		compatible = "mediatek,lcd-backlight";
+		led_mode = <5>;
+		data = <1>;
+		pwm_config = <0 20 0 0 0>;
+		lge.blmap-size = <256>;
+		lge.blmap = <
+                        9 9 9 9 9 9 9 9 9 9 9 9 10 10 10 10
+                        10 10 11 11 12 12 12 13 13 13 14 14 15 15 16 16
+                        17 17 18 19 19 20 20 21 21 22 23 24 25 26 27 28
+                        29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44
+                        45 46 47 48 50 51 53 55 56 58 60 61 63 65 66 68
+                        70 71 51 53 55 57 59 60 62 64 66 68 70 93 96 99
+                        102 105 107 110 113 116 119 122 125 127 130 133 135 138 141 143
+                        146 149 152 154 157 160 163 166 168 171 174 177 180 183 186 188
+                        191 194 197 201 204 208 212 215 219 222 226 230 233 237 241 245
+                        249 253 257 261 265 269 273 277 281 285 290 294 298 302 306 310
+                        314 318 322 326 330 334 338 342 347 352 356 361 366 371 376 380
+                        385 390 395 400 405 410 416 422 428 434 440 446 452 458 464 470
+                        476 483 490 497 504 511 518 525 532 539 546 553 560 562 567 572
+                        577 582 587 592 597 602 607 612 617 622 627 643 652 660 668 676
+                        684 692 701 709 717 717 723 730 736 742 749 755 761 768 774 780
+                        787 793 800 809 819 828 838 848 857 867 876 886 896 905 915 925
+		>;
+	};
+	vibrator0:vibrator@0 {
+		compatible = "mediatek,vibrator";
+		vib_timer = <25>;
+		vib_limit = <9>;
+		vib_vol= <9>;
+	};
+
+	sensors-sysfs {
+		compatible = "lge,sensors-sysfs";
+		sysfs,node =
+		/* group, user_node, kernel node */
+		"accelerometer", "run_calibration",  "/sys/bus/platform/drivers/gsensor/run_fast_calibration",
+		"accelerometer", "selftest",         "/sys/bus/platform/drivers/gsensor/selftest",
+		"proximity",     "run_calibration",  "/sys/bus/platform/drivers/als_ps/cali",
+		"proximity",     "calibration_data", "/sys/bus/platform/drivers/als_ps/ps_crosstalk"
+		;
+	};
+};
+
+
+&i2c0 {
+	cap_touch@38{
+		compatible = "mediatek,ft_cap_touch";
+		reg = <0x38>;
+		status = "disabled";
+		pinctrl-names = "state_focal_power_output0",
+			"state_focal_power_output1";
+		pinctrl-0 = <&ctp_pins_focal_power_output0>;
+		pinctrl-1 = <&ctp_pins_focal_power_output1>;
+	};
+	
+	focaltech,ft5446@38 {
+		compatible = "focaltech,ft5446";
+		status = "okay";
+
+		reg = <0x38>;
+		interrupt-parent = <&pio>;
+		interrupts = <6 0x2002 1 0>;
+		irqflags = <0x2002>;
+ 
+		reset-gpio = <&pio 119 0x00>;
+		irq-gpio = <&pio 6 0x2002>;
+		//vcl-gpio = <&pio 152 0x00>;	/* 2.8v - VDD */
+		//vdd-gpio = <&pio 42 0x00>;    /* 1.8v - IOVCC */
+       		vcl-supply = <&mt_pmic_vldo28_ldo_reg>;
+
+		/* IRQF_ONESHOT		0x00002000 */
+		/* IRQF_TRIGGER_FALLING		0x00000002 */
+		/* IRQF_NO_SUSPEND		0x00004000 */
+
+		pinctrl-names = "default", "touch_pin_active", "touch_pin_sleep";	/* Touch GPIO pin name setting */
+		pinctrl-0 = <&ts_pin_default>;
+		pinctrl-1 = <&ts_pin_active>;		/* Touch GPIO pin active setting */
+		pinctrl-2 = <&ts_pin_suspend>;		/* Touch GPIO pin suspend setting */
+
+		/*Caps*/
+		max_x = <480>;
+		max_y = <960>;
+		max_pressure = <0xff>;
+		max_width_major = <15>;
+		max_width_minor = <15>;
+		max_orientation = <1>;
+		max_id = <10>;
+		sw_reset_delay = <200>;
+		hw_reset_delay = <200>;
+
+		/* Role */
+		use_lpwg = <0>;
+		use_lpwg_test = <0>;
+		hide_coordinate = <0>;
+
+		/* firmware & panel_spec path */
+		use_fw_upgrade = <1>;
+		use_firmware = <0>;
+		fw_image = "touch/mh6/focaltech/FT5446_Pramboot_V1.1_20160425.bin",
+			"touch/mh6/focaltech/LGE_MH6_FT5446_Ver0x15_20190430_all.bin";
+		panel_spec = "touch/mh6/focaltech/mh6_limit.txt";
+		panel_spec_mfts_folder = "touch/mh6/focaltech/mh6_limit_mfts.txt";
+
+		/* Performance Test */
+		use_perf_test = <1>;
+		test_delay = <16>;
+		test_pressure = <50>;
+		test_width = <100>;
+		test_jig_size = <8>;
+		click_test_x = <90>;
+		click_test_y = <410>;
+		v_drag_test_x = <72>;
+		v_drag_test_start_y = <971>;
+		v_drag_test_end_y = <548>;
+		h_drag_test_start_x = <571>;
+		h_drag_test_end_x = <148>;
+		h_drag_test_y = <1064>;
+
+		/* Touch power regulator*/
+		
+		/* ft8006m specific */
+		//vdd-supply = <&pm8916_l17>;
+		//vcc_i2c-supply = <&pm8916_l6>;
+		focaltech,name = "fts";
+		focaltech,family-id = <0x54>;
+		//focaltech,reset-gpio = <&msmgpio 16 0x00>;
+		//focaltech,irq-gpio =<&msm_gpio 13 0x00>;
+		//focaltech,id1-gpio = <&msm_gpio 109 0x00>;
+		//focaltech,id2-gpio = <&msm_gpio 114 0x00>;
+		//focaltech,id3-gpio = <&msm_gpio 121 0x00>;
+		focaltech,display-coords = <0 0 480 854>;
+		focaltech,panel-coords = <0 0 1080 2000>;
+		focaltech,button-map= <70 150 907>;
+		focaltech,no-force-update;
+		focaltech,i2c-pull-up;
+		focaltech,group-id = <1>;
+		focaltech,hard-reset-delay-ms = <20>;
+		focaltech,soft-reset-delay-ms = <150>;
+		focaltech,num-max-touches = <10>;
+		focaltech,fw-name = "FT_Upgrade_App.i";
+		focaltech,fw-delay-aa-ms = <50>;
+		focaltech,fw-delay-55-ms = <30>;
+		focaltech,fw-upgrade-id1 = <0x79>;
+		focaltech,fw-upgrade-id2 = <0x03>;
+		focaltech,fw-delay-readid-ms = <10>;
+		focaltech,fw-delay-era-flsh-ms = <2000>;
+	};
+	
+};
+
+/* touch gpio start */
+&pio {
+	ts_pin_default: ts_default {
+	};
+
+	ts_pin_active: ts_active {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO6__FUNC_GPIO6>;
+			slew-rate = <0>;
+			bias-pull-up = <00>;
+		};
+	};
+
+	ts_pin_suspend: ts_suspend {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO6__FUNC_GPIO6>;
+			slew-rate = <0>;
+			bias-pull-up = <00>;
+		};
+	};
+};
+/* touch gpio end */
+
+
+
+&pio {
+	ctp_pins_focal_power_output0: poweroutput0 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO152__FUNC_GPIO152>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	ctp_pins_focal_power_output1: poweroutput1 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO152__FUNC_GPIO152>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+};
+
+
+&i2c1 {
+/*  start sensor */
+	gsensor@4c {
+		compatible = "mediatek,gsensor";
+		i2c_num = <1>;
+		i2c_addr = <0x4c 0 0 0>;
+		direction = <3>;
+		power_id = <0xffff>;
+		power_vol = <0>;
+		firlen = <0>;
+		is_batch_supported = <0>;
+	};
+
+    alsps@49 {
+		compatible = "mediatek,alsps";
+		pinctrl-names = "pin_default", "pin_cfg";
+		pinctrl-0 = <&alsps_intpin_default>;
+		pinctrl-1 = <&alsps_intpin_cfg>;
+		i2c_num = <1>;
+		i2c_addr = <0x49 0x00 0x00 0x00>;
+		polling_mode_ps = <0>;
+		polling_mode_als = <1>;
+		power_id = <0xffff>;
+		power_vol = <0>;
+		als_level = <7 43 81 122 192 268 457 576 737 929 1245 1506 2349 3166 5450  9733 10303 13410>;
+		als_value = <0 30 60 90  150 200 350 450 550 720  950 1100 1500 2000 3500  5600  6700  8700 10000>;
+		ps_threshold_high = <950>;
+		ps_threshold_low  = <420>;
+		is_batch_supported_ps = <0>;
+		is_batch_supported_als = <0>;
+	};
+
+/* end sensor */
+};
+
+/* sensor gpio standization */
+
+&pio {
+	alsps_intpin_cfg: alspspincfg {
+
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO9__FUNC_GPIO9>;
+			slew-rate = <0>;
+			bias-pull-up = <MTK_PUPD_SET_R1R0_01>;
+		};
+	};
+
+	alsps_intpin_default: alspsdefaultcfg {
+
+	};
+};
+
+/* sensor end */
+
+/* DISPSYS GPIO standardization */
+&pio {
+	mtkfb_pins_mode_te_gpio: mode_te_gpio {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO84__FUNC_DSI_TE>;
+		};
+	};
+
+	mtkfb_pins_mode_te_te: mode_te_te {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO84__FUNC_DSI_TE>;
+		};
+	};
+
+	mtkfb_pins_lcm_reset0: lcm_rst_out0_gpio {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO83__FUNC_LCM_RST>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+
+	mtkfb_pins_lcm_reset1: lcm_rst_out1_gpio {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO83__FUNC_LCM_RST>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+	mtkfb_pins_lcd_bias_enp0: lcd_bias_enp0_gpio {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO122__FUNC_GPIO122>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	mtkfb_pins_lcd_bias_enp1: lcd_bias_enp1_gpio {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO122__FUNC_GPIO122>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+};
+
+&mtkfb {
+	pinctrl-names = "mode_te_gpio", "mode_te_te", "lcm_rst_out0_gpio",
+		"lcm_rst_out1_gpio", "lcd_bias_enp0_gpio", "lcd_bias_enp1_gpio";
+	pinctrl-0 = <&mtkfb_pins_mode_te_gpio>;
+	pinctrl-1 = <&mtkfb_pins_mode_te_te>;
+	pinctrl-2 = <&mtkfb_pins_lcm_reset0>;
+	pinctrl-3 = <&mtkfb_pins_lcm_reset1>;
+	pinctrl-4 = <&mtkfb_pins_lcd_bias_enp0>;
+	pinctrl-5 = <&mtkfb_pins_lcd_bias_enp1>;
+	status = "okay";
+};
+/* DISPSYS GPIO standardization end */
+
+
+/* accdet start */
+&accdet {
+	/* accdet micbias voltage: 0x07,2.7v;0x05,2.5v;0x02,1.9v */
+	accdet-mic-vol = <6>;
+	headset-mode-setting = <0x500 0x500 1 0x1f0 0x800 0x210 0x20 0x44>;
+	accdet-plugout-debounce = <1>;
+	/*1:ACC mode, 2:low cost without in bias, 6:low cost with in bias*/
+	accdet-mic-mode = <1>;
+	/* eint_level_trigger: 8,LEVEL_LOW(default);4,LEVEL_HIGH;others,LEVEL_LOW */
+	headset-eint-level-pol = <8>;
+	/*0--MD_MAX--UP_MAX--DW_MAX*/
+	headset-three-key-threshold = <0 80 220 400>;
+	headset-three-key-threshold-CDD = <0 121 192 600>;
+	/*0--MD_MAX--VOICE_MAX--UP_MAX--DW_MAX*/
+	headset-four-key-threshold = <0 68 110 192 420>;
+	status = "okay";
+};
+/* accdet end */
+
+/* CONSYS GPIO standardization */
+&pio {
+	consys_pins_default: consys_default {
+	};
+	gpslna_pins_init: gpslna@0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO118__FUNC_GPIO118>;
+			slew-rate = <0>;
+			bias-disable;
+			output-low;
+		};
+	};
+	gpslna_pins_oh: gpslna@1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO118__FUNC_GPIO118>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	gpslna_pins_ol: gpslna@2 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO118__FUNC_GPIO118>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+};
+&consys {
+	pinctrl-names = "default", "gps_lna_state_init", "gps_lna_state_oh", "gps_lna_state_ol";
+	pinctrl-0 = <&consys_pins_default>;
+	pinctrl-1 = <&gpslna_pins_init>;
+	pinctrl-2 = <&gpslna_pins_oh>;
+	pinctrl-3 = <&gpslna_pins_ol>;
+	status = "okay";
+};
+&i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+
+	mtk-usb@60 {
+		compatible = "mediatek,mtk-usb";
+		reg = <0x60>;
+		status = "okay";
+	};
+};
+
+/* UART GPIO */
+&apuart0 {
+	pinctrl-names = "uart0_gpio_default",
+			"uart0_rx_set",
+			"uart0_rx_clear",
+			"uart0_tx_set",
+			"uart0_tx_clear";
+	pinctrl-0 = <&uart0_gpio_def_cfg>;
+	pinctrl-1 = <&uart0_rx_set_cfg>;
+	pinctrl-2 = <&uart0_rx_clr_cfg>;
+	pinctrl-3 = <&uart0_tx_set_cfg>;
+	pinctrl-4 = <&uart0_tx_clr_cfg>;
+	status = "okay";
+};
+
+&pio {
+	/* UART GPIO Settings - Start */
+	/* UART0: rx set, rx clear, tx clear, tx clear*/
+	uart0_gpio_def_cfg:uart0gpiodefault {
+
+	};
+	uart0_rx_set_cfg:uart0_rx_set@gpio20 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO20__FUNC_UART0RX>;
+		};
+	};
+	uart0_rx_clr_cfg:uart0_rx_clear@gpio20 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO20__FUNC_GPIO20>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	uart0_tx_set_cfg:uart0_tx_set@gpio21 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO21__FUNC_UART0TX>;
+		};
+	};
+	uart0_tx_clr_cfg:uart0_tx_clear@gpio21 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO21__FUNC_GPIO21>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+};/* UART GPIO end */
+
+/* TOUCH start */
+
+&touch {
+/*
+	tpd-resolution = <480 960>;
+	use-tpd-button = <0>;
+	tpd-key-num = <3>;
+	tpd-key-local= <139 172 158 0>;
+	tpd-key-dim-local = <90 883 100 40 230 883 100 40 370 883 100 40 0 0 0 0>;
+	tpd-max-touch-num = <10>;
+	tpd-filter-enable = <0>;
+	tpd-filter-pixel-density = <106>;
+	tpd-filter-custom-prameters = <0 0 0 0 0 0 0 0 0 0 0 0>;
+	tpd-filter-custom-speed = <0 0 0>;
+	pinctrl-names = "default", "state_eint_as_int", "state_eint_output0", "state_eint_output1",
+		"state_rst_output0", "state_rst_output1";
+	pinctrl-0 = <&ctp_pins_default>;
+	pinctrl-1 = <&ctp_pins_eint_as_int>;
+	pinctrl-2 = <&ctp_pins_eint_output0>;
+	pinctrl-3 = <&ctp_pins_eint_output1>;
+	pinctrl-4 = <&ctp_pins_rst_output0>;
+	pinctrl-5 = <&ctp_pins_rst_output1>;
+*/
+	status = "disable";
+};
+
+&pio {
+	ctp_pins_default: eint0default {
+	};
+	ctp_pins_eint_as_int: eint@0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO6__FUNC_GPIO6>;
+			slew-rate = <0>;
+			bias-pull-up;
+		};
+	};
+	ctp_pins_eint_output0: eintoutput0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO6__FUNC_GPIO6>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	ctp_pins_eint_output1: eintoutput1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO6__FUNC_GPIO6>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	ctp_pins_rst_output0: rstoutput0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO119__FUNC_GPIO119>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	ctp_pins_rst_output1: rstoutput1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO119__FUNC_GPIO119>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+};
+
+/* TOUCH end */
+
+/* NFC start */
+&nfc {
+	compatible = "mediatek,nfc-gpio-v2";
+	gpio-rst = <7>;
+	gpio-rst-std = <&pio 7 0x0>;
+	gpio-irq = <14>;
+	gpio-irq-std = <&pio 14 0x0>;
+};
+
+&irq_nfc {
+	compatible = "mediatek,irq_nfc-eint";
+};
+/* NFC end */
+
+/* CAMERA GPIO standardization */
+&pio {
+	camera_pins_cam0_rst0: cam0@0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO29__FUNC_GPIO29>;
+			slew-rate = <1>; /*direction 0:in, 1:out*/
+			output-low;/*direction out used only. output_low or high*/
+		};
+	};
+	camera_pins_cam0_rst1: cam0@1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO29__FUNC_GPIO29>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	camera_pins_cam0_pnd0: cam0@2 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO30__FUNC_GPIO30>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	camera_pins_cam0_pnd1: cam0@3 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO30__FUNC_GPIO30>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	camera_pins_cam1_pnd0: cam1@0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO22__FUNC_GPIO22>;
+			slew-rate = <1>; /*direction 0:in, 1:out*/
+			output-low;/*direction out used only. output_low or high*/
+		};
+	};
+	camera_pins_cam1_pnd1: cam1@1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO22__FUNC_GPIO22>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	camera_pins_cam0_mclk_on: camera_pins_cam0_mclk_on {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO126__FUNC_CMMCLK0>;
+		};
+	};
+	camera_pins_cam0_mclk_off: camera_pins_cam0_mclk_off {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO126__FUNC_GPIO126>;
+		};
+	};
+	camera_pins_cam1_mclk_on: camera_pins_cam1_mclk_on {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO127__FUNC_CMMCLK1>;
+		};
+	};
+	camera_pins_cam1_mclk_off: camera_pins_cam1_mclk_off {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO127__FUNC_GPIO127>;
+		};
+	};
+	camera_pins_default: camdefault {
+	};
+};
+
+&kd_camera_hw1 {
+	pinctrl-names = "default",
+			"cam0_rst0", "cam0_rst1", "cam0_pnd0", "cam0_pnd1",
+			"cam1_pnd0", "cam1_pnd1",
+			"cam0_mclk_on", "cam0_mclk_off",
+			"cam1_mclk_on", "cam1_mclk_off";
+
+	pinctrl-0 = <&camera_pins_default>;
+	pinctrl-1 = <&camera_pins_cam0_rst0>;
+	pinctrl-2 = <&camera_pins_cam0_rst1>;
+	pinctrl-3 = <&camera_pins_cam0_pnd0>;
+	pinctrl-4 = <&camera_pins_cam0_pnd1>;
+	pinctrl-5 = <&camera_pins_cam1_pnd0>;
+	pinctrl-6 = <&camera_pins_cam1_pnd1>;
+	pinctrl-7 = <&camera_pins_cam0_mclk_on>;
+	pinctrl-8 = <&camera_pins_cam0_mclk_off>;
+	pinctrl-9 = <&camera_pins_cam1_mclk_on>;
+	pinctrl-10 = <&camera_pins_cam1_mclk_off>;
+	status = "okay";
+
+};
+/* CAMERA GPIO end */
+
+&pio {
+ flash_default: flash_default_cfg{
+ };
+ flash_en_pin0: flash_en_pin0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO26__FUNC_GPIO26>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	flash_en_pin1: flash_en_pin1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO26__FUNC_GPIO26>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	torch_en_pin0: torch_en_pin0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO25__FUNC_GPIO25>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	torch_en_pin1: torch_en_pin1 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO25__FUNC_GPIO25>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+};
+
+&flashlights_led191 {
+	pinctrl-names = "flash_default", "flash_en_pin0", "flash_en_pin1", "torch_en_pin0", "torch_en_pin1";
+
+	pinctrl-0 = <&flash_default>;
+	pinctrl-1 = <&flash_en_pin0>;
+	pinctrl-2 = <&flash_en_pin1>;
+	pinctrl-3 = <&torch_en_pin0>;
+	pinctrl-4 = <&torch_en_pin1>;
+	status = "okay";
+};
+
+/* AUDIO GPIO standardization */
+&audgpio {
+	pinctrl-names =
+			"aud_dat_mosi_off",
+			"aud_dat_mosi_on",
+			"aud_dat_miso_off",
+			"aud_dat_miso_on",
+			"extamp-pullhigh",
+			"extamp-pulllow",
+			"hacamp-pullhigh",
+			"hacamp-pulllow";
+	pinctrl-0 = <&aud_dat_mosi_off>;
+	pinctrl-1 = <&aud_dat_mosi_on>;
+	pinctrl-2 = <&aud_dat_miso_off>;
+	pinctrl-3 = <&aud_dat_miso_on>;
+	pinctrl-4 = <&aud_pins_extamp_high>;
+	pinctrl-5 = <&aud_pins_extamp_low>;
+	pinctrl-6 = <&aud_pins_hacamp_high>;
+	pinctrl-7 = <&aud_pins_hacamp_low>;
+	status = "okay";
+};
+
+&pio {
+	aud_dat_mosi_off: aud_dat_mosi_off {
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO63__FUNC_GPIO63>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO64__FUNC_GPIO64>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+
+	aud_dat_mosi_on: aud_dat_mosi_on {
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO63__FUNC_AUD_DAT_MOSI0>;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO64__FUNC_AUD_DAT_MOSI1>;
+		};
+	};
+
+	aud_dat_miso_off: aud_dat_miso_off {
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO67__FUNC_GPIO67>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO68__FUNC_GPIO68>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+
+	aud_dat_miso_on: aud_dat_miso_on {
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO67__FUNC_AUD_DAT_MISO0>;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO68__FUNC_AUD_DAT_MISO1>;
+		};
+	};
+
+	aud_pins_extamp_high: audexamphigh {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO24__FUNC_GPIO24>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+	aud_pins_extamp_low: audexamplow {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO24__FUNC_GPIO24>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+
+	aud_pins_hacamp_high: audhacamphigh {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO28__FUNC_GPIO28>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+	aud_pins_hacamp_low: audhacamplow {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO28__FUNC_GPIO28>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+};
+/* AUDIO end */
+
+/* POWER start */
+&bat_gm30 {
+	/*
+	 * Below setting is cut off 3.3 parameter.
+	 * If use cutoff 3.4V, use MTK original parameter
+	 */
+	/*	vboot voltage for gauge 0%.*/
+	PMIC_MIN_VOL = <(32500)>;
+	/*	shutdown gauge 0% voltage*/
+	SHUTDOWN_GAUGE0_VOLTAGE = <(33000)>;
+	/*	System shut down voltage.*/
+	Q_MAX_SYS_VOLTAGE_BAT0 = <(3250)>;
+	/*	System shut down voltage.*/
+	Q_MAX_SYS_VOLTAGE_BAT1 = <(3250)>;
+	/*	System shut down voltage.*/
+	Q_MAX_SYS_VOLTAGE_BAT2 = <(3250)>;
+	/*	System shut down voltage.*/
+	Q_MAX_SYS_VOLTAGE_BAT3 = <(3250)>;
+	/* no used. Ignore. Just for align with shutdown condition 3.3v */
+	SHUTDOWN_GAUGE1_VBAT = <(33000)>;
+	/* Related to low voltage tracking */
+	VBAT2_DET_VOLTAGE1 = <(33500)>;
+	VBAT2_DET_VOLTAGE2 = <(31000)>;
+	VBAT2_DET_VOLTAGE3 = <(34000)>;
+	/* cut off scenario. below setting means that 2% shutdown with 3.3v. */
+	UI_LOW_LIMIT_VTH0 = <(33000)>;
+	UI_LOW_LIMIT_VTH1 = <(33000)>;
+	UI_LOW_LIMIT_VTH2 = <(33000)>;
+	UI_LOW_LIMIT_VTH3 = <(33000)>;
+	UI_LOW_LIMIT_VTH4 = <(33000)>;
+
+	g_Q_MAX_SYS_VOLTAGE = <3250 3250 3250 3250>;
+	g_PMIC_MIN_VOL = <32500 32500 32500 32500
+			32500 32500 32500 32500
+			32500 32500 32500 32500
+			31200 31200 31200 31200
+			30000 30000 30000 30000
+			30000 30000 30000 30000
+			30000 30000 30000 30000
+			30000 30000 30000 30000
+			30000 30000 30000 30000
+			30000 30000 30000 30000>;
+
+	g_QMAX_SYS_VOL = <32500 32500 32500 32500
+			32500 32500 32500 32500
+			32500 32500 32500 32500
+			31900 31900 31900 31900
+			31800 31800 31800 31800
+			32500 32500 32500 32500
+			32500 32500 32500 32500
+			32500 32500 32500 32500
+			32500 32500 32500 32500
+			32500 32500 32500 32500>;
+	/*
+	 * Above setting value is cut off 3.3 parameter.
+	 * If use cutoff 3.4V, use MTK original parameter
+	 */
+
+	/*      Pseudo 100% percentage at T0.*/
+	g_FG_PSEUDO100_T0 = <(95)>;
+	/*      Pseudo 100% percentage at T1.*/
+	g_FG_PSEUDO100_T1 = <(95)>;
+	/*      Pseudo 100% percentage at T2.*/
+	g_FG_PSEUDO100_T2 = <(95)>;
+	/*      Pseudo 100% percentage at T3.*/
+	g_FG_PSEUDO100_T3 = <(95)>;
+
+	PSEUDO1_SEL = <(0)>;
+
+	g_FG_PSEUDO1 = <1  1  1  1
+			1  1  1  1
+			1  1  1  1
+			1  1  1  1
+			1  1  1  1
+			1  1  1  1
+			1  1  1  1
+			1  1  1  1
+			1  1  1  1
+			1  1  1  1>;
+
+	AGING_FACTOR_DIFF = <(5)>;
+	DIFFERENCE_VOLTAGE_UPDATE = <(-1)>;
+	AGING1_UPDATE_SOC = <(10)>;
+	AGING1_LOAD_SOC = <(50)>;
+	ZCV_SUSPEND_TIME = <(9)>;
+	SLEEP_CURRENT_AVG = <(500)>; /*0.1mA*/
+
+	CAR_TUNE_VALUE = <(98)>;
+	HWOCV_OLDOCV_DIFF_CHR = <(1500)>;
+	SWOCV_OLDOCV_DIFF_CHR = <(1500)>;
+	VIR_OLDOCV_DIFF_EMB = <(2000)>;
+	VIR_OLDOCV_DIFF_EMB_LT = <(2000)>;
+
+	POWER_ON_CAR_CHR = <(20)>;
+	POWER_ON_CAR_NOCHR = <(-35)>;
+
+	/*The ui_soc will keep 100% until SOC drop X percents after unplugged.*/
+	KEEP_100_PERCENT = <(2)>;
+
+	#include "bat_setting/battery_BL-O1.dtsi"
+};
+
+&i2c5 {
+	sm5414@49 {
+		compatible = "sm,sm5414";
+		reg = <0x49>;
+		status = "okay";
+
+		charger_name = "primary_chg";
+		polling_mode;
+
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&sm5414_default>;
+		pinctrl-1 = <&sm5414_sleep>;
+
+		irq-gpio = <&pio 2 0>;
+
+		intmsk = [1B ED FF];
+		aiclth = <4600000>;
+		prechg = <450000>;
+		batreg = <4400000>;
+		weakbat = <3600000>;
+		topoff = <200000>;
+		dislimit = <4000000>;
+		votg = <5000000>;
+		topofftimer = <10>;
+	};
+};
+
+&pio {
+	sm5414_default: sm5414_default {
+		nshdn {
+			pins = <PINMUX_GPIO16__FUNC_GPIO16>;
+			output-high;
+		};
+		nchgen {
+			pins = <PINMUX_GPIO33__FUNC_GPIO33>;
+			output-low;
+		};
+		nint {
+			pins = <PINMUX_GPIO2__FUNC_GPIO2>;
+			input-enable;
+			slew-rate = <0>;
+			bias-pull-up;
+		};
+	};
+	sm5414_sleep: sm5414_sleep {
+		nshdn {
+			pins = <PINMUX_GPIO16__FUNC_GPIO16>;
+			output-low;
+		};
+	};
+};
+
+&charger {
+	algorithm_name = "LGECharging";
+	power_path_support;
+
+	/* common */
+	battery_cv = <4400000>;
+	max_charger_voltage = <6500000>;
+	min_charger_voltage = <4400000>;
+
+	/* usb charging curent */
+	usb_charger_current_suspend = <500000>;
+	usb_charger_current_unconfigured = <500000>;
+
+	/* charging current */
+	ac_charger_current = <1300000>;
+	ac_charger_input_current = <1200000>;
+	charging_host_charger_current = <1200000>;
+
+	/* LGE Charging Algorithm */
+	lge_charging {
+		ieoc = <200000>;
+		aicl-interval = <60>;
+
+		step-ieoc = <450000>;
+		step-ichg = <200000>;
+		vfloat-offset = <100000>;
+
+		release-input;
+	};
+};
+
+&mt_charger {
+	floated-retry-ms = <3000>; /* 3000 ms */
+};
+
+/* Battery ID */
+&odm {
+	battery_id {
+		compatible = "lge,battery-id";
+		voltage-max = <4400000>;
+		charge-full-design = <3000000>;
+		model-name = "BL-O1";
+
+		ATL {
+			id = "ATL";
+			manufacturer = "ATL";
+			profile-idx = <0>;
+		};
+		BYD {
+			id = "BYD";
+			manufacturer = "BYD";
+			profile-idx = <1>;
+		};
+	};
+};
+
+/* Cable ID */
+&odm {
+	cable_id {
+		compatible = "lge,cable-id";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cable_id_default>;
+
+		channel = <12>;
+		delay = <50>;
+
+		/*
+		 * Pull-up : 1.8V 150k (1%)
+		 * Pull-down : 680k (1%)
+		 * ID : 56k (20%), 130k (20%), 910k (20%)
+		 * ADC Accuracy : +-10mV
+		 */
+		range = <
+		/*	min 	max 	type	*/
+			393	549	6	/* 6: LT_CABLE_56K */
+			676	855	7	/* 7: LT_CABLE_130K */
+			1253	1347	11	/* 11: LT_CABLE_910K */
+			1348	1500	8	/* 8: USB_CABLE_400MA */
+		>;
+
+		embedded-battery;
+		debounce = <5>;
+	};
+};
+
+&pio {
+	cable_id_default: cable_id_default {
+		iddig {
+			pins = <PINMUX_GPIO31__FUNC_GPIO31>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+};
+
+/* Charger Controller */
+&odm {
+	charger_controller {
+		compatible = "lge,charger-controller";
+
+		/* base information */
+		icl = <1200>;
+		fcc = <1300>;
+		vfloat = <4400>;
+		vbus = <5000>;
+		technology = <2>;
+
+		/* otp */
+		otp-version = "2.1";
+		otp-fcc = <900>;
+		otp-vfloat = <4000>;
+
+		/* llk */
+		llk-soc-min = <45>;
+		llk-soc-max = <50>;
+
+		/* spec */
+		spec = <
+			 0  5 4400 600	/* 0.2C */
+			 5 15 4400 900  /* 0.3C */
+			15 45 4400 2100	/* 0.7C */
+			45 60 4100 1500	/* 0.5C */
+		>;
+
+		/* game */
+		game-fcc = <500>;
+
+		game-light-fcc = <500>;
+		game-light-load = <80>;
+		game-light-sec = <100>;
+
+		game-lowbatt-fcc = <500>;
+		game-lowbatt-soc = <15>;
+	};
+};
+
+/* Unified Power Sysfs */
+&odm {
+	lge_power_sysfs {
+		compatible = "lge,power-sysfs";
+		sysfs,node =
+			/* adc group */
+			"adc", "batt_id", "/sys/class/power_supply/battery_id/valid_batt_id",
+			"adc", "batt_therm", "/sys/class/power_supply/battery/temp",
+			"adc", "thermal", "/sys/class/thermal/",
+			"adc", "usb_id", "/sys/module/lge_cable_id/parameters/usb_id",
+			"adc", "usb_in", "/sys/class/power_supply/charger/voltage_now",
+			"adc", "vts", "/sys/class/thermal/thermal_zone16/temp",
+			/* battery group */
+			"battery", "battery_type", "/sys/class/power_supply/battery_id/manufacturer",
+			"battery", "capacity", "/sys/class/power_supply/battery/capacity",
+			"battery", "cycle", "/sys/class/power_supply/battery/battery_cycle",
+			"battery", "raw_capacity", "/sys/class/power_supply/battery/raw_capacity",
+			"battery", "health", "/sys/class/power_supply/battery/health",
+			"battery", "present", "/sys/class/power_supply/battery/present",
+			"battery", "pseudo_batt", "/sys/module/pseudo_power_supply/parameters/pseudo_batt",
+			"battery", "temp", "/sys/class/power_supply/battery/temp",
+			"battery", "valid_batt_id", "/sys/class/power_supply/battery_id/valid_batt_id",
+			"battery", "check_batt_id_for_aat", "/sys/class/power_supply/battery_id/check_batt_id_for_aat",
+			"battery", "voltage_now", "/sys/class/power_supply/battery/voltage_now",
+			"battery", "status", "/sys/class/power_supply/battery/status",
+			"battery", "charge_full", "/sys/class/power_supply/battery/charge_full",
+			"battery", "charge_full_design", "/sys/class/power_supply/battery/charge_full_design",
+			"battery", "charge_counter", "/sys/class/power_supply/battery/charge_counter",
+			"battery", "battery_age", "/sys/class/power_supply/battery/battery_age",
+			"battery", "battery_age_level", "/sys/class/power_supply/battery/battery_age_level",
+			"battery", "condition", "/sys/class/power_supply/battery/battery_condition",
+			/* charger group */
+			"charger", "ac_online", "/sys/class/power_supply/ac/online",
+			"charger", "usb_online", "/sys/class/power_supply/usb/online",
+			"charger", "present", "/sys/class/power_supply/charger/online",
+			"charger", "ibat_current", "/sys/class/power_supply/battery/current_now",
+			"charger", "ichg_current", "/sys/class/power_supply/usb/current_max",
+			"charger", "charging_enabled", "/sys/class/power_supply/charger_controller/charging_enabled",
+			"charger", "restricted_charging", "/sys/module/charger_controller/parameters/restricted_charging",
+			"charger", "store_demo_enabled", "/sys/class/power_supply/charger_controller/store_demo_enabled",
+			"charger", "fastchg", "/sys/class/power_supply/charger/fastchg",
+			"charger", "fastchg_support", "/sys/class/power_supply/charger/fastchg_support",
+			"charger", "incompatible", "/sys/class/power_supply/charger/incompatible_chg",
+			"charger", "pseudo_hvdcp", "/sys/module/pseudo_power_supply/parameters/hvdcp_mode",
+			"charger", "chgstep", "/sys/module/charger_controller/parameters/chgstep",
+			/* lcd group */
+			"lcd", "brightness", "/sys/class/leds/lcd-backlight/brightness",
+			"lcd", "max_brightness", "/sys/class/leds/lcd-backlight/max_brightness",
+			/* key led group */
+			"key_led", "red_brightness", "/sys/class/leds/red/brightness",
+			"key_led", "setting", "/sys/class/leds/red/pattern_id",
+			/* cpu group */
+			"cpu", "game_mode", "/proc/ppm/policy/auto_game_limit",
+			"cpu", "prmlimit_maxfreq", "/proc/ppm/policy/fbcn_limit",
+			"cpu", "prmlimt_gpu", "/proc/gpufreq/gpufreq_opp_max_freq",
+			/* gpu group */
+			/* platform group */
+			/* perf service feature group */
+			/* testmode group */
+			"testmode", "batt_id", "/sys/class/power_supply/battery_id/batt_id",
+			"testmode", "battexist", "/sys/class/power_supply/battery/present",
+			"testmode", "charge", "/sys/module/charger_controller/parameters/atcmd_charge",
+			"testmode", "chcomp", "/sys/module/charger_controller/parameters/atcmd_chcomp",
+			"testmode", "chgmodeoff", "/sys/module/charger_controller/parameters/atcmd_chgmodeoff",
+			"testmode", "current_max", "/sys/class/power_supply/usb/current_max",
+			"testmode", "current_now", "/sys/class/power_supply/battery/current_now",
+			"testmode", "fuelval", "/sys/class/power_supply/battery/capacity",
+			"testmode", "temp", "/sys/module/charger_controller/parameters/atcmd_batmp",
+			"testmode", "usb_id", "/sys/module/lge_cable_id/parameters/atcmd_usb_id",
+			"testmode", "valid_batt_id", "/sys/class/power_supply/battery_id/check_batt_id_for_aat",
+			"testmode", "voltage_now", "/sys/class/power_supply/battery/voltage_now";
+	};
+};
+/* POWER end */
+
+/* reserved memory of sram */
+&reserved_memory {
+        #address-cells = <2>;
+        #size-cells = <2>;
+        smembackup-reserved-memory@44500000 {
+               compatible = "lge,smembackup";
+               reg = <0 0x44500000 0 0x10000>;
+        };
+};
+
+
+/* SWTP start (modified by eddy.kim@lge.com '19.05.10)*/
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+&swtp {
+    interrupt-parent = <&pio>;
+    interrupts = <111 IRQ_TYPE_LEVEL_HIGH 111 0>;
+    deb-gpios = <&pio 111 0>;
+    debounce = <512000>;
+    status = "okay";
+};
+/* SWTP end (modified by eddy.kim@lge.com '19.05.10)*/
+
+
+#include <muse6739_mh6_p/cust.dtsi>
+/*End of this file, DO NOT ADD ANYTHING HERE*/
